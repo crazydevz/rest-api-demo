@@ -11,7 +11,7 @@ const validateToken = (req, res, next) => {
     const token = req.headers.authorization.split(" ")[1].trim();
     const decoded = jwt.verify(token, process.env.SECRET_KEY);
     req.user = decoded;
-    return next();
+    next();
   } catch (err) {
     response.status = 401;
     response.message = err.message;
@@ -25,12 +25,17 @@ const restrictTo = (...roles) => {
   let response = { ...constants.defaultServiceResponse };
 
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    try {
+      if (!roles.includes(req.user.role)) {
+        throw new Error(constants.requestValidationMessage.NOT_AUTHORIZED);
+      }
+      next();
+    } catch (err) {
       response.status = 403;
-      response.message = "Access denied. You do not have the required role.";
-      return res.status(response.message).send(response);
+      response.message = err.message;
     }
-    next();
+
+    res.status(response.status).send(response);
   };
 };
 
