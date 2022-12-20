@@ -1,43 +1,36 @@
-const constants = require("../constants");
 const jwt = require("jsonwebtoken");
 
-const validateToken = (req, res, next) => {
+const constants = require("../constants");
+const catchAsync = require("./catchAsync");
+const AppError = require("../middleware/appError");
+
+const validateToken = catchAsync(async (req, res, next) => {
   let response = { ...constants.defaultServiceResponse };
 
-  try {
-    if (!req.headers.authorization) {
-      throw new Error(constants.requestValidationMessage.TOKEN_MISSING);
-    }
-    const token = req.headers.authorization.split(" ")[1].trim();
-    const decoded = jwt.verify(token, process.env.SECRET_KEY);
-    req.user = decoded;
-    next();
-  } catch (err) {
+  if (!req.headers.authorization) {
     response.status = 401;
-    response.message = err.message;
-    console.log("Error", err);
+    response.message = constants.requestValidationMessage.TOKEN_MISSING;
+    return next(new AppError(response));
   }
 
-  return res.status(response.status).send(response);
-};
+  const token = req.headers.authorization.split(" ")[1].trim();
+  const decoded = jwt.verify(token, process.env.SECRET_KEY);
+  req.user = decoded;
+  next();
+});
 
-const restrictTo = (...roles) => {
+const restrictTo = catchAsync(async (...roles) => {
   let response = { ...constants.defaultServiceResponse };
 
   return (req, res, next) => {
-    try {
-      if (!roles.includes(req.user.role)) {
-        throw new Error(constants.requestValidationMessage.NOT_AUTHORIZED);
-      }
-      next();
-    } catch (err) {
+    if (!roles.includes(req.user.role)) {
       response.status = 403;
-      response.message = err.message;
+      response.message = constants.requestValidationMessage.NOT_AUTHORIZED;
+      return next(new AppError(response));
     }
-
-    res.status(response.status).send(response);
+    next();
   };
-};
+});
 
 module.exports = {
   validateToken,
