@@ -1,5 +1,6 @@
 const constants = require('../constants')
 const productService = require('../services/product')
+const catchAsync = require('../middleware/catchAsync')
 
 const createProduct = async (req, res) => {
 	let response = { ...constants.defaultServiceResponse }
@@ -16,20 +17,16 @@ const createProduct = async (req, res) => {
 	return res.status(response.status).send(response)
 }
 
-const getAllProducts = async (req, res) => {
+const getAllProducts = catchAsync(async (req, res) => {
 	let response = { ...constants.defaultServiceResponse }
-	try {
-		const payload = await productService.getAllProducts(req.query)
-		response.status = 200
-		response.message = constants.productMessage.PRODUCT_FETCHED
-		response.body = payload
-	} catch (err) {
-		console.log('Something went wrong: Controller: getAllProducts', err)
-		response.message = err.message
-	}
+
+	const payload = await productService.getAllProducts(req.query)
+	response.status = 200
+	response.message = constants.productMessage.PRODUCT_FETCHED
+	response.body = payload
 
 	return res.status(response.status).send(response)
-}
+})
 
 const getProductById = async (req, res) => {
 	let response = { ...constants.defaultServiceResponse }
