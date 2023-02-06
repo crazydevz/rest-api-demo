@@ -8,27 +8,27 @@ const {
 } = require('../middleware/schemaValidation');
 const { validateToken } = require('../middleware/auth');
 
-router.post(
-	'/',
-	validateToken,
-	validateBody(productSchema.createProductSchema),
-	productController.createProduct
-);
+router
+	.route('/')
+	.get(
+		validateToken,
+		validateQueryParams(productSchema.getAllProductsSchema),
+		productController.getAllProducts
+	)
+	.post(
+		validateToken,
+		validateBody(productSchema.createProductSchema),
+		productController.createProduct
+	);
 
-router.get(
-	'/',
-	validateToken,
-	validateQueryParams(productSchema.getAllProductsSchema),
-	productController.getAllProducts
-);
-
-router.patch(
-	'/:id',
-	validateToken,
-	validateBody(productSchema.updateProductSchema),
-	productController.updateProduct
-);
-
-router.delete('/:id', productController.deleteProduct);
+router
+	.route('/:id')
+	.get(productController.getProductById)
+	.patch(
+		validateToken,
+		validateBody(productSchema.updateProductSchema),
+		productController.updateProduct
+	)
+	.delete(validateToken, productController.deleteProduct);
 
 module.exports = router;
